@@ -124,7 +124,7 @@ whisp mp3 wav --silent
 
 ## License
 
-MIT © [Your Name]
+MIT © Jacob Reiff
 
 ## Contributing
 
