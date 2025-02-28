@@ -35,23 +35,6 @@ Whisp is an Oh My Zsh plugin that adds idempotency and convenience features to O
    source ~/.zshrc
    ```
 
-### Using a Plugin Manager
-
-#### Zinit
-```bash
-zinit light yourusername/whisp
-```
-
-#### Antigen
-```bash
-antigen bundle yourusername/whisp
-```
-
-#### Zplug
-```bash
-zplug "yourusername/whisp"
-```
-
 ## Usage
 
 ### Basic Commands
