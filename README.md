@@ -22,7 +22,7 @@ Whisp is an Oh My Zsh plugin that adds idempotency and convenience features to O
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/whisp.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/whisp
+   git clone https://github.com/jaacob/whisp.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/whisp
    ```
 
 2. Add the plugin to your `.zshrc` file:
