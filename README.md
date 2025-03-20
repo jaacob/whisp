@@ -10,6 +10,7 @@ Whisp is an Oh My Zsh plugin that adds idempotency and convenience features to O
 - **Model Selection**: Easily switch between Whisper models
 - **Recursive Searching**: Optionally find audio files in subdirectories
 - **Output Control**: View Whisper's real-time output or suppress it
+- **Resource Management**: Limit CPU usage to prevent system slowdown
 
 ## Dependencies
 
@@ -22,7 +23,7 @@ Whisp is an Oh My Zsh plugin that adds idempotency and convenience features to O
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/jaacob/whisp.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/whisp
+   git clone https://github.com/yourusername/whisp.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/whisp
    ```
 
 2. Add the plugin to your `.zshrc` file:
@@ -34,6 +35,23 @@ Whisp is an Oh My Zsh plugin that adds idempotency and convenience features to O
    ```bash
    source ~/.zshrc
    ```
+
+### Using a Plugin Manager
+
+#### Zinit
+```bash
+zinit light yourusername/whisp
+```
+
+#### Antigen
+```bash
+antigen bundle yourusername/whisp
+```
+
+#### Zplug
+```bash
+zplug "yourusername/whisp"
+```
 
 ## Usage
 
@@ -79,8 +97,11 @@ whisp --subdir
 # Run silently (suppress Whisper output)
 whisp --silent
 
+# Limit CPU cores used (reduces system load)
+whisp --cores 2
+
 # Combine options
-whisp mp3 --model medium --force --subdir
+whisp mp3 --model medium --force --subdir --cores 4
 ```
 
 ## Idempotency Behavior
@@ -124,7 +145,7 @@ whisp mp3 wav --silent
 
 ## License
 
-MIT © Jacob Reiff
+MIT © [Your Name]
 
 ## Contributing
 
