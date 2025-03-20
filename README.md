@@ -143,9 +143,13 @@ whisp interview.mp3 --force
 whisp mp3 wav --silent
 ```
 
+## Support
+
+This has only been tested on macOS Sequoia 15. YMMV.
+
 ## License
 
-MIT © [Your Name]
+MIT © Jacob Reiff
 
 ## Contributing
 
