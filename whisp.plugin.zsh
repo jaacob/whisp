@@ -53,6 +53,7 @@ _whisp_process_file() {
   local force=$3
   local language=$4
   local silent=$5
+  local cores=$6
   local lang_option=""
   
   if [[ ! -f "$file" ]]; then
@@ -104,12 +105,18 @@ _whisp_process_file() {
   # Run whisper command
   echo "Transcribing '$file' with model '$model'..."
   
+  # Set core limit if specified
+  local env_prefix=""
+  if [[ -n "$cores" && "$cores" -gt 0 ]]; then
+    env_prefix="OMP_NUM_THREADS=$cores MKL_NUM_THREADS=$cores"
+  fi
+  
   if [[ "$silent" == "true" ]]; then
     # Run silently
-    eval "whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\" &> /dev/null"
+    eval "$env_prefix whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\" &> /dev/null"
   else
     # Show standard output
-    eval "whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\""
+    eval "$env_prefix whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\""
   fi
   
   # Rename output file if necessary
@@ -174,6 +181,7 @@ whisp() {
   local language=""
   local subdir=false
   local silent=false
+  local cores=""
   local files=()
   local extensions=()
   
@@ -200,6 +208,15 @@ whisp() {
       --silent)
         silent=true
         shift
+        ;;
+      --cores)
+        if [[ "$2" =~ ^[0-9]+$ ]]; then
+          cores="$2"
+          shift 2
+        else
+          echo "Error: --cores requires a numeric value."
+          return 1
+        fi
         ;;
       -*)
         echo "Unknown option: $1"
@@ -235,7 +252,7 @@ whisp() {
   if [[ ${#files} -gt 0 ]]; then
     # Process specified files
     for file in "${files[@]}"; do
-      _whisp_process_file "$file" "$model" "$force" "$language" "$silent"
+      _whisp_process_file "$file" "$model" "$force" "$language" "$silent" "$cores"
     done
   elif [[ ${#extensions} -gt 0 ]]; then
     # Process files with specified extensions
@@ -256,7 +273,7 @@ whisp() {
     fi
     
     for file in "${found_files[@]}"; do
-      _whisp_process_file "$file" "$model" "$force" "$language" "$silent"
+      _whisp_process_file "$file" "$model" "$force" "$language" "$silent" "$cores"
     done
   else
     # Process all audio files in current directory
@@ -277,7 +294,7 @@ whisp() {
     fi
     
     for file in "${found_files[@]}"; do
-      _whisp_process_file "$file" "$model" "$force" "$language" "$silent"
+      _whisp_process_file "$file" "$model" "$force" "$language" "$silent" "$cores"
     done
   fi
   
@@ -295,6 +312,7 @@ _whisp_completion() {
     '--language[Specify language]:language:' \
     '--subdir[Search recursively in subdirectories]' \
     '--silent[Suppress Whisper output to terminal]' \
+    '--cores[Limit CPU cores used]:cores:' \
     '*:file or extension:_files'
 }
 
