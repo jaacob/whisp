@@ -106,17 +106,37 @@ _whisp_process_file() {
   echo "Transcribing '$file' with model '$model'..."
   
   # Set core limit if specified
-  local env_prefix=""
+  local core_prefix=""
   if [[ -n "$cores" && "$cores" -gt 0 ]]; then
-    env_prefix="OMP_NUM_THREADS=$cores MKL_NUM_THREADS=$cores"
+    if command -v taskset &> /dev/null; then
+      # Use taskset if available (Linux)
+      # Create a mask for the specified number of cores
+      local mask="0x"
+      for ((i=0; i<cores; i++)); do
+        mask="${mask}1"
+      done
+      core_prefix="taskset $mask"
+    else
+      # Fallback to environment variables (might work on macOS)
+      core_prefix="OMP_NUM_THREADS=$cores MKL_NUM_THREADS=$cores NUMEXPR_NUM_THREADS=$cores OPENBLAS_NUM_THREADS=$cores VECLIB_MAXIMUM_THREADS=$cores"
+    fi
+    
+    # Log which method is being used
+    if [[ "$silent" != "true" ]]; then
+      if command -v taskset &> /dev/null; then
+        echo "Using taskset to limit to $cores cores"
+      else
+        echo "Using environment variables to limit to $cores cores"
+      fi
+    fi
   fi
   
   if [[ "$silent" == "true" ]]; then
     # Run silently
-    eval "$env_prefix whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\" &> /dev/null"
+    eval "$core_prefix whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\" &> /dev/null"
   else
     # Show standard output
-    eval "$env_prefix whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\""
+    eval "$core_prefix whisper \"$file\" --model $model $lang_option --output_format txt --output_dir \"$(dirname "$file")\""
   fi
   
   # Rename output file if necessary
@@ -188,6 +208,65 @@ whisp() {
   # Parse arguments
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --help|-h)
+        cat << 'EOF'
+Whisp - An Oh My Zsh plugin for OpenAI's Whisper with idempotency
+
+USAGE:
+  whisp [OPTIONS] [FILES/EXTENSIONS...]
+
+DESCRIPTION:
+  Transcribe audio files using OpenAI's Whisper CLI with smart idempotency.
+  Skips files that already have transcriptions unless --force is used.
+
+COMMANDS:
+  whisp                          Process all audio files in current directory
+  whisp file.mp3                 Process a specific file
+  whisp file1.mp3 file2.m4a      Process multiple specific files
+  whisp mp3                      Process all .mp3 files in current directory
+  whisp mp3 m4a wav              Process files with any of these extensions
+
+OPTIONS:
+  --model MODEL                  Specify Whisper model to use
+                                 Options: tiny, base, small, medium, large, turbo
+                                 Default: turbo
+
+  --force                        Force transcription even if one already exists
+                                 Creates uniquely numbered transcriptions
+
+  --language LANG                Specify source language for transcription
+                                 Example: --language en
+
+  --subdir                       Search recursively in subdirectories
+                                 Default: current directory only
+
+  --silent                       Suppress Whisper output to terminal
+                                 Default: show full output
+
+  --cores NUM                    Limit CPU cores used by Whisper
+                                 Example: --cores 2
+
+  --help, -h                     Show this help message
+
+SUPPORTED AUDIO FORMATS:
+  mp3, mp4, m4a, wav, flac, aac, ogg, wma
+
+EXAMPLES:
+  whisp                          # Process all audio in current directory
+  whisp mp3 --model medium       # Process MP3s with medium model
+  whisp --subdir --silent        # Process all audio recursively, quietly
+  whisp interview.mp3 --force    # Force retranscription of a file
+  whisp --cores 2 --model large  # Limit to 2 cores with large model
+
+IDEMPOTENCY:
+  - Single file: Prompts before creating duplicate transcription
+  - Batch mode: Automatically skips files with existing transcriptions
+  - Use --force to override and create numbered transcriptions
+
+For more information, visit: https://github.com/jaacob/whisp
+EOF
+        return 0
+        ;;
       --model)
         model="$2"
         _whisp_validate_model "$model" || return 1
@@ -220,6 +299,7 @@ whisp() {
         ;;
       -*)
         echo "Unknown option: $1"
+        echo "Use 'whisp --help' for usage information."
         return 1
         ;;
       *)
