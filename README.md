@@ -1,21 +1,23 @@
-# Whisp - An Oh My Zsh plugin for OpenAI's Whisper
+# Whisp - An Oh My Zsh plugin for WhisperX
 
-Whisp is an Oh My Zsh plugin that adds idempotency and convenience features to OpenAI's Whisper CLI tool. It helps you efficiently transcribe audio files without duplicating work.
+Whisp is an Oh My Zsh plugin that adds idempotency, convenience features, and speaker diarization to the [WhisperX](https://github.com/m-bain/whisperX) CLI tool. It helps you efficiently transcribe audio files without duplicating work.
 
 ## Features
 
 - **Idempotent Processing**: Skip files that already have transcriptions unless explicitly forced
+- **Speaker Diarization**: Identify who is speaking with `--diarize` (powered by pyannote.audio)
 - **Batch Processing**: Transcribe multiple files with a single command
 - **Extension Filtering**: Process files of specific audio types
-- **Model Selection**: Easily switch between Whisper models
+- **Model Selection**: Easily switch between WhisperX models
 - **Recursive Searching**: Optionally find audio files in subdirectories
-- **Output Control**: View Whisper's real-time output or suppress it
-- **Resource Management**: Limit CPU usage to prevent system slowdown
+- **Output Control**: View WhisperX's real-time output or suppress it
+- **Resource Management**: Limit thread usage to prevent system slowdown
 
 ## Dependencies
 
 - [Oh My Zsh](https://ohmyz.sh/)
-- [OpenAI's Whisper](https://github.com/openai/whisper) CLI tool properly installed and available in your PATH
+- [WhisperX](https://github.com/m-bain/whisperX) CLI tool properly installed and available in your PATH
+- For diarization: A [HuggingFace](https://huggingface.co) API token with access to pyannote models
 
 ## Installation
 
@@ -61,7 +63,7 @@ whisp file1.mp3 file2.m4a
 ### Options
 
 ```bash
-# Choose which Whisper model to use (default is turbo)
+# Choose which WhisperX model to use (default is turbo)
 whisp --model tiny
 whisp --model base
 whisp --model small
@@ -78,14 +80,39 @@ whisp --language en
 # Search for audio files in subdirectories
 whisp --subdir
 
-# Run silently (suppress Whisper output)
+# Run silently (suppress WhisperX output)
 whisp --silent
 
-# Limit CPU cores used (reduces system load)
+# Limit threads used (reduces system load)
 whisp --cores 2
+
+# Set compute type (default: float32, also: float16, int8)
+whisp --compute-type float32
 
 # Combine options
 whisp mp3 --model medium --force --subdir --cores 4
+```
+
+### Diarization
+
+Speaker diarization identifies who is speaking and when. To use it:
+
+1. Create a [HuggingFace](https://huggingface.co) account
+2. Accept the pyannote model agreements:
+   - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
+   - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
+3. Create an access token at [HuggingFace Settings](https://huggingface.co/settings/tokens)
+4. Either set `HF_TOKEN` in your environment or pass `--hf-token`
+
+```bash
+# Transcribe with speaker identification
+whisp --diarize meeting.mp3
+
+# Pass HuggingFace token directly
+whisp --diarize --hf-token hf_abc123 meeting.mp3
+
+# Specify expected number of speakers
+whisp --diarize --min-speakers 2 --max-speakers 4 call.mp3
 ```
 
 ## Idempotency Behavior
@@ -125,6 +152,11 @@ whisp interview.mp3 --force
 ### Process multiple file types silently
 ```bash
 whisp mp3 wav --silent
+```
+
+### Transcribe a meeting with speaker diarization
+```bash
+whisp --diarize --min-speakers 2 meeting.mp3
 ```
 
 ## Support
