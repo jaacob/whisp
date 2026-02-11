@@ -336,7 +336,9 @@ EOF
     done
   elif [[ ${#extensions} -gt 0 ]]; then
     # Process files with specified extensions
-    local found_files=($(_whisp_find_by_extensions "$subdir" "${extensions[@]}"))
+    local _output=$(_whisp_find_by_extensions "$subdir" "${extensions[@]}")
+    local -a found_files=()
+    [[ -n "$_output" ]] && found_files=("${(f)_output}")
     if [[ ${#found_files} -eq 0 ]]; then
       if [[ "$subdir" == "true" ]]; then
         echo "No matching audio files found in current directory or subdirectories."
@@ -357,7 +359,9 @@ EOF
     done
   else
     # Process all audio files in current directory
-    local found_files=($(_whisp_find_by_extensions "$subdir" "${SUPPORTED_AUDIO_EXTENSIONS[@]}"))
+    local _output=$(_whisp_find_by_extensions "$subdir" "${SUPPORTED_AUDIO_EXTENSIONS[@]}")
+    local -a found_files=()
+    [[ -n "$_output" ]] && found_files=("${(f)_output}")
     if [[ ${#found_files} -eq 0 ]]; then
       if [[ "$subdir" == "true" ]]; then
         echo "No audio files found in current directory or subdirectories."
